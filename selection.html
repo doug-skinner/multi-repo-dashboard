@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Repositories - Multi-Repo Dashboard</title>
+    <link rel="stylesheet" href="styles/common.css">
+    <script src="scripts/storage.js"></script>
+    <script src="scripts/api.js"></script>
+    <style>
+        .selection-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .selection-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .selection-header h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .selection-header p {
+            color: var(--color-text-secondary);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .filter-tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            transition: all var(--transition-fast);
+        }
+
+        .filter-tab:hover {
+            color: var(--color-text);
+        }
+
+        .filter-tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .filter-controls {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+        }
+
+        .org-filter {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .bulk-button {
+            padding: 0.5rem 1rem;
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .bulk-button:hover {
+            background: var(--color-border);
+        }
+
+        .repos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .repo-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--color-border);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .repo-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(3, 102, 214, 0.1);
+        }
+
+        .repo-card.selected {
+            border-color: var(--color-primary);
+            background: rgba(3, 102, 214, 0.02);
+        }
+
+        .repo-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .repo-checkbox {
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .repo-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+        }
+
+        .repo-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .repo-name {
+            font-weight: 600;
+            color: var(--color-text);
+            word-break: break-word;
+        }
+
+        .repo-full-name {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .repo-description {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .repo-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .repo-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .language-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            background: var(--color-background);
+            color: var(--color-text-secondary);
+        }
+
+        .org-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #0969da;
+            color: white;
+        }
+
+        .action-bar {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 1rem;
+            border-top: 2px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+        }
+
+        .selection-count {
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .cancel-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--color-background);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .save-button {
+            padding: 0.75rem 2rem;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .save-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="selection-container">
+        <div class="selection-header">
+            <h1>Select Repositories to Track</h1>
+            <p>Choose which repositories you want to monitor in your dashboard.</p>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Repos</button>
+            <button class="filter-tab" data-filter="personal">Personal Repos</button>
+            <button class="filter-tab" data-filter="organization">Organization Repos</button>
+        </div>
+
+        <div class="filter-controls">
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Search repositories..."
+            >
+            <select id="org-filter" class="org-filter" style="display:none;">
+                <option value="">All Organizations</option>
+            </select>
+            <div class="bulk-actions">
+                <button id="select-all" class="bulk-button">Select All</button>
+                <button id="deselect-all" class="bulk-button">Deselect All</button>
+            </div>
+        </div>
+
+        <div id="repos-container" class="loading">
+            <p>Loading repositories...</p>
+        </div>
+
+        <div class="action-bar">
+            <div class="selection-count">
+                <span id="selected-count">0</span> repositories selected
+            </div>
+            <div class="action-buttons">
+                <button id="cancel-button" class="cancel-button">Cancel</button>
+                <button id="save-button" class="save-button" disabled>Save Selection</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/selection.js"></script>
+</body>
+</html>
