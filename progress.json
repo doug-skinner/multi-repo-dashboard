@@ -57,10 +57,10 @@
     "id": 7,
     "title": "Implement basic dashboard with repository cards",
     "description": "Create main dashboard view displaying tracked repositories as cards. Each card shows: Header with owner avatar (user or org), repository name linked to GitHub, organization badge if org repo, pin button, remove button. Stats row with stars, forks, watchers counts. Activity section with last commit info. Issues & PRs section with open counts and links. Footer with primary language badge, owner name (clickable filter), last updated timestamp, quick action buttons (View on GitHub, Issues, PRs, Commits). Implement responsive grid layout. Use tracked_repos from localStorage as data source. Support empty state when no repos tracked.",
-    "status": "Not Started",
-    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Complex\nDependencies: 6",
+    "status": "In Progress",
+    "notes": "Starting work on implementing basic dashboard with repository cards",
     "created": "2025-12-10T21:50:00.000Z",
-    "updated": "2025-12-10T21:50:00.000Z"
+    "updated": "2025-12-10T22:10:17.389Z"
   },
   {
     "id": 8,
