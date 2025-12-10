@@ -1,0 +1,524 @@
+[
+  {
+    "id": 1,
+    "title": "Setup GitHub Pages repository infrastructure",
+    "description": "Initialize the GitHub repository and configure GitHub Pages hosting. Create repository with appropriate name (e.g., github-repo-dashboard). Enable GitHub Pages in repository settings, set source to main branch. Configure custom domain if desired. Set up basic project structure with index.html as entry point. Verify deployment pipeline works correctly by pushing test page.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Infrastructure\nComplexity: Simple\nDependencies: None",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 2,
+    "title": "Implement GitHub PAT authentication system",
+    "description": "Create PAT input interface with welcome screen explaining the application. Display clear instructions with link to create PAT (https://github.com/settings/tokens/new). List required scopes: repo, read:user, read:org. Include security disclaimer about localStorage. Validate PAT by calling /user endpoint. Handle validation errors with helpful messages. Provide option between localStorage (persistent) and sessionStorage (session-only). Store validated PAT securely. Never log or transmit PAT except to GitHub API.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: None",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "Fetch and store authenticated user information",
+    "description": "Call GitHub REST API /user endpoint with authenticated PAT. Retrieve user profile including login, name, avatar_url. Store user information in localStorage following documented schema. Display user avatar and name in dashboard header. Handle API errors gracefully with retry option. Validate API response structure. Use user info for subsequent API calls requiring authentication.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Simple\nDependencies: 2",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 4,
+    "title": "Fetch and manage user organizations",
+    "description": "Call GitHub REST API /user/orgs endpoint to retrieve all organizations the authenticated user belongs to. Store organization data (id, login, avatar_url, description) in localStorage per documented schema. Display organizations in UI for filtering and selection. Support filtering repos by specific organization. Show organization avatars and branding in UI. Enable bulk operations at organization level. Handle organizations with no repos gracefully. Cache organization list with 30-minute TTL per caching strategy.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 2",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 5,
+    "title": "Fetch repositories from user and organizations",
+    "description": "Implement multi-source repository fetching. Call /user/repos with params: type=all, sort=updated, per_page=100, affiliation=owner,collaborator,organization_member. For each organization, call /orgs/{org}/repos with params: type=all, sort=updated, per_page=100. Handle pagination to retrieve all repos. Merge results from all sources. Store repo metadata including id, full_name, name, owner, owner_type (User/Organization). Cache repo lists with 5-minute TTL per documented caching strategy. Handle rate limiting gracefully.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 2, 4",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 6,
+    "title": "Create repository selection interface with organization support",
+    "description": "Build repository selection UI shown during first-time setup. Implement tab/filter system: Personal Repos, Organization Repos (with org dropdown), All Repos. Display all fetched repos with checkboxes for selection. Show repo metadata: owner avatar, stars, language, last updated, organization badge. Support select all/deselect all per tab. Include search/filter within selection interface. Save selected repos to tracked_repos in localStorage with schema: id, full_name, name, owner, owner_type, pinned (default false), notes (empty string). Validate at least one repo selected before proceeding.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Complex\nDependencies: 4, 5",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 7,
+    "title": "Implement basic dashboard with repository cards",
+    "description": "Create main dashboard view displaying tracked repositories as cards. Each card shows: Header with owner avatar (user or org), repository name linked to GitHub, organization badge if org repo, pin button, remove button. Stats row with stars, forks, watchers counts. Activity section with last commit info. Issues & PRs section with open counts and links. Footer with primary language badge, owner name (clickable filter), last updated timestamp, quick action buttons (View on GitHub, Issues, PRs, Commits). Implement responsive grid layout. Use tracked_repos from localStorage as data source. Support empty state when no repos tracked.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Complex\nDependencies: 6",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 8,
+    "title": "Fetch and display last commit information per repository",
+    "description": "For each tracked repository, call /repos/{owner}/{repo}/commits with per_page=5 to get recent commits. Extract most recent commit data: timestamp, message, author name, author avatar. Display in Activity Section of repo card: relative time (e.g., \"2 hours ago\"), truncated commit message, author avatar and name. Cache commit data with 2-minute TTL per documented caching strategy. Handle repos with no commits gracefully. Format relative timestamps for human readability.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 5, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 9,
+    "title": "Fetch and display open issues count per repository",
+    "description": "For each tracked repository, call /repos/{owner}/{repo}/issues with state=open parameter. Count total open issues. Display count on repo card with link to GitHub issues page. Cache issues data with 2-minute TTL per documented strategy. Handle repos with no issues (show 0). Include visual indicator for repos with issues. Filter out pull requests from issue count (issues endpoint returns both by default).",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 5, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 10,
+    "title": "Fetch and display open pull requests count per repository",
+    "description": "For each tracked repository, call /repos/{owner}/{repo}/pulls with state=open parameter. Count total open PRs. Display count on repo card with link to GitHub pulls page. Cache PR data with 2-minute TTL per documented strategy. Handle repos with no PRs (show 0). Include visual indicator for repos with open PRs. Enable filtering dashboard by \"has open PRs\" per documented filters.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 5, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 11,
+    "title": "Implement manual refresh functionality",
+    "description": "Add global refresh button in dashboard header. On click, invalidate all caches and refetch all data: user info, organizations, repo lists, commits, issues, PRs. Show loading state during refresh. Update last_refresh timestamp in localStorage. Support individual repo refresh from repo card. Display last refresh timestamp in header. Handle refresh failures gracefully with retry option. Provide visual feedback during refresh (spinner, progress indicator).",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 3, 4, 5, 8, 9, 10",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 12,
+    "title": "Implement localStorage persistence system",
+    "description": "Create comprehensive localStorage management following documented schema. Store: github_pat, user_info (login, name, avatar_url), organizations array, tracked_repos array with full metadata, dashboard_settings object, cache object for API responses with TTL, last_refresh timestamp. Implement get/set utilities for each data type. Handle localStorage quota exceeded errors. Provide migration utilities for schema updates. Support export/backup of all localStorage data. Validate data integrity on load. Clear stale cache entries automatically.",
+    "status": "Not Started",
+    "notes": "Phase: 1 (MVP)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: None",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 13,
+    "title": "Implement intelligent caching layer with TTL support",
+    "description": "Build caching system that wraps GitHub API calls. Store response data with timestamp and TTL in localStorage cache object. Implement TTL-based cache invalidation: repo list (5 min), org list (30 min), commits (2 min), issues/PRs (2 min), repo details (10 min). Check cache validity before API calls - return cached data if fresh. Support manual cache override (refresh button). Implement smart refresh that only fetches stale data. Store cache per endpoint with unique keys. Include cache statistics (hit rate, size). Clean up expired cache entries automatically.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 14,
+    "title": "Implement repository search functionality",
+    "description": "Add search input in dashboard header. Filter displayed repos in real-time as user types. Search across repository name and full_name fields. Highlight matching text in results. Support case-insensitive matching. Show result count. Clear search button. Maintain search state during session. Combine with other filters (AND logic). Show empty state when no matches found. Implement debouncing for performance with large repo lists.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Simple\nDependencies: 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 15,
+    "title": "Implement organization filtering",
+    "description": "Add filter controls for organization-based filtering. Support filter by owner type: All, Personal, Organization. Add dropdown to filter by specific organization (populated from user's orgs). Quick toggle to show only org repos. Display active filter state clearly. Support URL parameters to share filtered views. Count and display repos per filter. Combine with search and other filters. Remember last filter selection in session. Show organization badge/avatar in filter UI.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: HIGH\nCategory: Feature\nComplexity: Moderate\nDependencies: 4, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 16,
+    "title": "Implement advanced filtering options",
+    "description": "Add comprehensive filtering system. Filter by primary language (extract from repo data, show language options). Boolean filters: has open issues, has open PRs. Last updated date range filter with presets (today, this week, this month, custom range). Support multiple filter combinations (AND logic). Show active filters as chips/tags. Clear individual or all filters. Display filtered result count. Maintain filter state in URL query params for shareability. Performance optimize for large datasets.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 9, 10",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 17,
+    "title": "Implement sorting functionality",
+    "description": "Add sort dropdown with options: Last updated (default), Name (A-Z), Created date, Stars count, Open issues count, Owner name. Support ascending/descending toggle. Apply sort to currently displayed (filtered) repos. Persist sort preference in dashboard_settings. Show active sort indicator. Sort should be stable (maintain relative order for equal values). Combine with filtering seamlessly. Handle missing/null values gracefully (e.g., repos with no stars).",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Simple\nDependencies: 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 18,
+    "title": "Implement view mode toggle (grid/list/compact)",
+    "description": "Add view mode selector in dashboard header with three options: Grid view (responsive card grid), List view (condensed rows with key info), Compact view (ultra-dense table). Each view shows same data with different density/layout. Persist view preference in dashboard_settings. Maintain current filters/sort when switching views. Ensure all views are responsive. Grid view should be default. Include view mode icons/labels in selector. Compact view optimized for maximum information density.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 19,
+    "title": "Implement theme system (dark/light/auto)",
+    "description": "Create theme system with three options: Light, Dark, Auto (follows system preference). Store theme preference in dashboard_settings. Implement CSS variables for all colors. Listen to prefers-color-scheme media query for auto mode. Add theme toggle in settings or header. Smooth transition between themes. Ensure all components respect theme. Test contrast ratios for accessibility. Include theme-aware SVG icons. Auto mode should detect system changes in real-time.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: None",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 20,
+    "title": "Implement pin/unpin repository functionality",
+    "description": "Add pin button to each repo card. Toggle pinned state on click. Update tracked_repos[].pinned in localStorage. Sort pinned repos to top of dashboard automatically. Show visual indicator for pinned status (pin icon, different background). Support pinning/unpinning from card or detail view. Maintain pin state across sessions. Consider pin state in sorting (pinned items first, then sort within pinned/unpinned groups). Show count of pinned repos in dashboard header.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Simple\nDependencies: 7, 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 21,
+    "title": "Implement GitHub API rate limit monitoring",
+    "description": "Call /rate_limit endpoint periodically and after API calls. Display remaining requests in dashboard (header or footer). Show as progress bar or percentage. Visual warning when < 100 requests remain (yellow/red indicator). Display reset time countdown. Show rate limit status: remaining/total requests, resets in X minutes. Include tooltip with detailed rate limit info (search, graphql, core). Prevent API calls when limit exhausted. Auto-resume when limit resets.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 2",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 22,
+    "title": "Implement responsive design for all screen sizes",
+    "description": "Ensure application works on mobile, tablet, and desktop. Use responsive breakpoints for layout adjustments. Grid view should collapse gracefully (4 cols → 3 → 2 → 1). List/compact views optimized for mobile. Touch-friendly tap targets (44x44px minimum). Hamburger menu for mobile navigation. Test on common devices and browsers. Support landscape and portrait orientations. Optimize font sizes for readability on small screens. Consider mobile-first CSS approach.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Quality\nComplexity: Moderate\nDependencies: All UI features",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 23,
+    "title": "Display organization avatars and branding",
+    "description": "Show organization avatars on repo cards and in filters. Display org logo/avatar next to org-owned repos. Fetch avatar_url from organizations data. Support custom colors per organization (stored in dashboard_settings). Apply org colors to badges or borders. Show org name with avatar in owner section. Link org avatar to filter by that org. Handle missing avatars gracefully (use initials or default icon). Ensure avatars are accessible (alt text, proper contrast).",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Enhancement\nComplexity: Simple\nDependencies: 4, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 24,
+    "title": "Add/remove repositories from tracked list",
+    "description": "Add \"Add repos\" button in dashboard header. Opens repository selection interface (similar to first-time setup). Show all available repos (personal + org) with checkboxes for currently tracked repos. Allow adding new repos to tracked list. Add remove button to each repo card. Confirm before removing tracked repo. Update tracked_repos in localStorage. Support bulk remove operations. Show animation when adding/removing. Maintain sort/filter state after modifications. Handle edge case of removing all repos (show empty state with add button).",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 6, 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 25,
+    "title": "Add personal notes capability to repositories",
+    "description": "Enable users to add private notes to each tracked repository. Add notes field to tracked_repos[] schema (already documented). Provide UI to view/edit notes: click to edit inline or modal. Store notes in localStorage (never sent to GitHub). Display notes on repo card (truncated) and full text in detail view. Support markdown formatting in notes. Include character count/limit. Auto-save notes on blur or explicit save. Search should include notes field. Export notes with settings export.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 7, 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 26,
+    "title": "Implement settings panel for customization",
+    "description": "Create settings panel accessible from header. Group settings by category: Display (view_mode, density, show_org_badge), Behavior (auto_refresh, refresh_interval), Appearance (theme, custom colors), Data (clear cache, export/import). Persist all settings to dashboard_settings in localStorage. Show current values in settings UI. Validate settings input (e.g., refresh_interval range). Apply settings immediately or on save. Include reset to defaults option. Show settings as modal or side panel. Make settings accessible and keyboard-navigable.",
+    "status": "Not Started",
+    "notes": "Phase: 2 (Enhanced UX)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 27,
+    "title": "Implement auto-refresh functionality",
+    "description": "Add auto_refresh toggle in settings. When enabled, automatically refresh data at configurable interval (refresh_interval in seconds, default 300). Show countdown to next refresh in UI. Pause auto-refresh when tab not visible (Page Visibility API). Optional: prioritize refreshing pinned repos. Respect cache TTLs (don't refresh data that's still fresh). Provide visual indicator during auto-refresh. Allow manual refresh to reset auto-refresh timer. Stop auto-refresh when rate limit low.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 11, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 28,
+    "title": "Implement custom tags/categories for repositories",
+    "description": "Allow users to create custom tags for organizing repos. Extend tracked_repos schema with tags[] array. Provide tag creation UI (text input with autocomplete). Assign multiple tags per repo. Display tags on repo cards as colored badges. Filter repos by tag. Manage tags: rename, delete, change color. Store tag definitions in localStorage. Show tag list with repo counts. Support tag-based saved filters. Export tags with settings. Use tag colors consistently throughout UI.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 29,
+    "title": "Implement repository archive functionality",
+    "description": "Add archive capability for inactive repos. Extend tracked_repos schema with archived boolean. Add archive action to repo card menu. Archived repos hidden from main dashboard by default. Add filter toggle to show/hide archived repos. Visual distinction for archived repos when shown. Unarchive capability. Support bulk archive operations (e.g., not updated in 6 months). Show archived count in stats. Archived repos excluded from activity insights. Maintain archived repos in localStorage for potential reactivation.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 7, 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 30,
+    "title": "Bulk add all repositories from an organization",
+    "description": "In repository selection interface, add \"Add all from org\" button per organization. When clicked, select all repos from that organization. Confirm before bulk add (show count). Add selected org repos to tracked_repos. Handle large organizations gracefully (show progress, allow cancellation). Option to exclude archived repos from bulk add. Provide summary after bulk add (X repos added). Support from settings/add repos interface. Consider rate limits when adding many repos at once.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Simple\nDependencies: 4, 6, 24",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 31,
+    "title": "Create organization overview cards",
+    "description": "Add organization overview section to dashboard. For each org user belongs to, show summary card: org avatar and name, total repos tracked from this org, recent activity summary (commits, issues, PRs across org repos), link to filter by this org, option to bulk add repos. Display as separate section above repo cards or in sidebar. Show org-level stats: most active repo, language breakdown, total open issues/PRs. Make org cards collapsible. Click org card to filter dashboard to that org's repos.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 4, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 32,
+    "title": "Display user permissions for organization repositories",
+    "description": "Fetch user's permission level for each org repo (admin, write, read). Show permission badge on org repo cards. Use /repos/{owner}/{repo}/collaborators/{username}/permission endpoint. Indicate if user is admin, maintainer, write access, or read-only. Show permissions in repo detail view. Filter by permission level. Cache permission data with repo details (10-minute TTL). Handle permission fetch failures gracefully. Show permission info only for org repos (not personal).",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 4, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 33,
+    "title": "Display team membership and team repositories",
+    "description": "Fetch user's team memberships within organizations. Show team badge on repos associated with user's teams. Filter repos by team. Display team context in org cards (e.g., \"You're on Frontend team\"). List team members with avatars. Use /user/teams and /orgs/{org}/teams endpoints. Handle orgs where user isn't on any teams. Show team-specific activity/stats. Link team name to filter by team repos. Cache team data with org data (30-minute TTL).",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Complex\nDependencies: 4, 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 34,
+    "title": "Track and display commit streaks",
+    "description": "Calculate commit streaks across all tracked repos (personal + org). Fetch commit history and identify consecutive days with commits. Display current streak and longest streak in dashboard. Show streak in days with visual indicator (fire icon, etc.). Highlight streak milestone achievements (7 day, 30 day, 100 day). Include calendar view showing streak visualization. Handle timezone properly. Consider commits across all repos (merged activity). Update streak daily or on refresh. Motivational feature to encourage consistent contributions.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 8",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 35,
+    "title": "Create activity heatmap visualization",
+    "description": "Build GitHub-style contribution heatmap. Show calendar grid with commit activity intensity per day. Color intensity represents number of commits (darker = more commits). Display last 12 months of activity. Aggregate commits from all tracked repos (personal + org). Hover shows date and commit count. Click day to see repos active that day. Use SVG or canvas for rendering. Consider using Chart.js or D3.js. Provide alternate view for colorblind users. Show total contributions count. Export heatmap as image option.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 8",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 36,
+    "title": "Create language breakdown pie chart",
+    "description": "Visualize language distribution across tracked repos. Count repos per primary language. Display as pie chart or bar chart. Show language name, repo count, and percentage. Use language colors (GitHub language colors). Filter to show only top N languages (e.g., top 5). Click language slice to filter dashboard by that language. Include \"Other\" category for long tail. Show in insights/stats section or dashboard sidebar. Use Chart.js for rendering. Provide alternate table view for accessibility.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 37,
+    "title": "Rank and display most active repositories",
+    "description": "Calculate activity score for each repo based on recent commits, issues created, PRs opened. Define time window for \"recent\" (e.g., last 7 or 30 days). Rank repos by activity score. Display top 5-10 most active repos in dashboard widget or insights section. Show activity indicators (commit count, issue count, PR count). Link to each repo. Update ranking on refresh. Provide toggle between time windows (week, month, all-time). Highlight repos with unusual activity spikes.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 7, 8, 9, 10",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 38,
+    "title": "Display organization vs personal contribution statistics",
+    "description": "Separate and visualize contributions to organization repos vs personal repos. Count commits, issues, PRs per category. Show as comparison chart (side-by-side bars or stacked bar). Display percentages: X% org work, Y% personal. Break down by organization (contributions per org). Show time-based trends (this week, this month). Include in insights/stats section. Help users understand work distribution. Support filtering date range. Export stats as image or data.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 4, 8, 9, 10",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 39,
+    "title": "Export settings and tracked repos to JSON",
+    "description": "Add export functionality in settings. Generate JSON file containing tracked_repos, organizations, dashboard_settings (exclude github_pat for security). Create downloadable file with descriptive name (e.g., github-dashboard-settings-2025-01-15.json). Include metadata: export date, version. Validate JSON structure before export. Option to include/exclude certain data (repos, settings, orgs). Show export success confirmation. Provide export button in settings panel. Use as backup mechanism.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Simple\nDependencies: 12, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 40,
+    "title": "Import settings and tracked repos from JSON",
+    "description": "Add import functionality in settings. Accept JSON file upload or drag-and-drop. Validate JSON structure against expected schema. Preview what will be imported before applying. Merge or replace modes: merge with existing data or replace completely. Confirm before overwriting existing settings. Import tracked_repos, organizations, dashboard_settings. Handle errors gracefully (invalid JSON, schema mismatch). Show import success/failure summary. Refresh dashboard after successful import. Provide import button in settings panel.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 12, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 41,
+    "title": "Generate shareable configuration link",
+    "description": "Create shareable URL containing tracked repos and settings (excluding PAT). Encode configuration in URL query parameters or hash. Support URL shortening service integration for long URLs. Copy link to clipboard. Recipient opens link to import configuration (prompts for their own PAT). Use Base64 encoding for compactness. Handle URL length limits gracefully. Show preview of what will be shared. Include warning about sharing org repo list (might reveal private info). Generate shareable config button in settings.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 39",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 42,
+    "title": "Implement browser notifications for new activity",
+    "description": "Request browser notification permission on opt-in. When auto-refresh detects new issues or PRs, show browser notification. Notification includes: repo name, activity type (new issue/PR), title/number. Click notification to open GitHub issue/PR. Settings to enable/disable notifications. Settings for notification types (issues, PRs, mentions). Respect browser Do Not Disturb mode. Only notify when tab not active. Rate limit notifications to avoid spam. Use Notification API. Fallback to in-app badges if notifications denied.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 9, 10, 27",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 43,
+    "title": "Display activity badges for new activity",
+    "description": "Track activity state since last visit (store last_visit timestamp). Compare current data with last visit data to identify new items. Show badge on repo cards with new activity (new commits, issues, PRs). Display count of new items in badge. Badge types: new commits (green), new issues (yellow), new PRs (blue). Clear badge state on repo card interaction or explicit dismiss. Store badge state in localStorage. Reset all badges on manual refresh. Show total new activity count in dashboard header.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 12",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 44,
+    "title": "Highlight pull requests awaiting user review",
+    "description": "Fetch PRs where user is requested reviewer. Use /search/issues with \"review-requested:{username}\" query. Highlight these PRs on dashboard with special indicator. Show count of PRs awaiting review in header. Separate section or filter for \"Review Queue\". Display PR age (time waiting for review). Sort by urgency (age, author, repo importance). Link directly to PR review page. Support marking as reviewed (dismiss from queue). Refresh review queue on dashboard refresh. Optional notification for new review requests.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 2, 10",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 45,
+    "title": "Notify for @mentions in organization repositories",
+    "description": "Fetch notifications where user is @mentioned in org repos. Use /notifications endpoint with participating=true. Filter to org repos only. Show notification badge in dashboard header. Display notification list with: repo, issue/PR title, mention context. Mark notifications as read. Link to specific comment with mention. Group notifications by repo. Show count of unread mentions. Separate org mentions from personal repo mentions. Fetch notifications periodically (respect rate limits). Option to enable/disable in settings.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 2, 4",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 46,
+    "title": "Enable bulk operations on selected repositories",
+    "description": "Add checkbox selection mode for repo cards. Select multiple repos with checkboxes. Actions bar appears when repos selected. Bulk actions: pin/unpin, archive, add tag, remove from tracking, refresh. Select all/deselect all options. Show count of selected repos. Confirm destructive bulk actions. Provide bulk action progress indicator. Support keyboard shortcuts for selection (Shift+click range select). Exit selection mode with cancel/done button. Maintain selection state during filtering/sorting.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 7",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 47,
+    "title": "Customize quick action buttons on repo cards",
+    "description": "Allow users to customize which quick action buttons appear on repo cards. Default buttons: View on GitHub, Issues, PRs, Commits (documented in Core Features). Settings to add/remove/reorder buttons. Additional button options: Branches, Actions, Settings, Releases, Wiki, Projects. Store button configuration in dashboard_settings per user preference. Apply configuration consistently across all repo cards. Limit visible buttons to avoid clutter (show top N, rest in menu). Icon-based buttons with tooltips. Different configurations per view mode (grid vs list).",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 48,
+    "title": "Implement keyboard shortcuts for navigation and actions",
+    "description": "Add keyboard shortcut support with documented keys: r (refresh all), s (focus search), / (command palette), n (add new repo), o (filter by organization). Show keyboard shortcut help modal (? key). Implement command palette (fuzzy search for actions and repos). Listen for keyboard events globally (not in input fields). Visual feedback when shortcut triggered. Shortcuts should be accessible (don't conflict with browser shortcuts). Document shortcuts in help/settings. Support vim-style navigation (j/k for up/down). Esc to close modals/dialogs.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: MEDIUM\nCategory: Feature\nComplexity: Moderate\nDependencies: 7, 14, 24",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 49,
+    "title": "Add custom accent color picker",
+    "description": "Allow users to customize primary accent color. Color picker in settings for accent color selection. Apply accent color to: links, buttons, badges, active states, highlights. Use CSS variables for consistent application. Validate color contrast for accessibility (WCAG AA). Store custom color in dashboard_settings. Provide color presets for quick selection. Reset to default color option. Preview color changes before applying. Ensure accent color works with both light and dark themes.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 19, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 50,
+    "title": "Implement density settings for UI compactness",
+    "description": "Add density setting with three levels: Comfortable (default, spacious), Compact (reduced padding), Ultra-compact (minimal spacing). Apply density to: repo cards, list items, headers, spacing. Store density preference in dashboard_settings. Change spacing via CSS variables. Higher density = more information visible. Ensure readability at all densities. May combine with view modes (grid comfortable, list compact, etc.). Apply consistently across all UI elements. Preview density in settings.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 51,
+    "title": "Allow customization of repo card layout",
+    "description": "Enable users to customize which information appears on repo cards. Settings to show/hide: stats row (stars/forks/watchers), activity section, issues/PRs, language badge, owner name, quick actions. Reorder card sections via drag-and-drop in settings. Store card layout configuration in dashboard_settings. Different layouts per view mode allowed. Preview layout changes. Reset to default layout option. Ensure minimum viable info always shown. Apply layout consistently across all cards.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Complex\nDependencies: 7, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 52,
+    "title": "Save and reuse filter combinations",
+    "description": "Allow users to save current filter state as named preset. Save filters include: search term, owner type, org selection, language, has issues/PRs, date range, sort. Store saved filters in dashboard_settings. Quick access to saved filters (dropdown or sidebar). Apply saved filter with one click. Edit/delete saved filters. Export/import saved filters. Default filter option (apply on load). Share saved filter via URL. Show filter name when active. Support keyboard shortcut to cycle through saved filters.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 16, 26",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 53,
+    "title": "Create smart collections for dynamic repo grouping",
+    "description": "Implement predefined smart collections (dynamic filters): \"Active this week\" (commits in last 7 days), \"Needs attention\" (open PRs awaiting review), \"Org repos with open PRs\", \"Stale repos\" (no activity in 30 days), \"My repos with issues\", \"Pinned repos\", \"Recently added\". Collections update automatically based on current data. Display collections as sidebar navigation or filter shortcuts. Show repo count per collection. Support custom smart collections (user-defined rules). Collections use same filtering/sorting logic. Click collection to filter dashboard.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 8, 9, 10, 16",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 54,
+    "title": "Implement boolean search for complex queries",
+    "description": "Extend search to support boolean operators: AND, OR, NOT. Search syntax examples: \"frontend AND react\", \"api OR backend\", \"NOT archived\". Search across multiple fields: name, description, topics, notes. Support parentheses for grouping: \"(frontend OR backend) AND typescript\". Support quoted strings for exact match: \"my repo\". Provide search syntax help/documentation. Show search parser errors. Save complex searches as filters. Use search query parser library. Case-insensitive by default, optional case-sensitive mode.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Moderate\nDependencies: 14",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 55,
+    "title": "Filter by multiple selected organizations",
+    "description": "Enhance org filter to support multi-select. Display org list with checkboxes for selection. Show repos from any selected org (OR logic). Display selected org names/avatars. Support \"Select all orgs\" and \"Deselect all\". Show repo count per org in selector. Apply multi-org filter with other filters. Save multi-org selection as filter preset. URL parameter support for shareability. Clear multi-org filter button. Persist selection in session.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Feature\nComplexity: Simple\nDependencies: 15",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 56,
+    "title": "Create bookmarklet for quick access",
+    "description": "Generate bookmarklet JavaScript that opens dashboard in new tab or popup. Provide drag-and-drop installation instructions. Bookmarklet opens directly to dashboard if logged in. Option to open to specific filter or collection. Compact bookmarklet code for bookmark storage. Instructions page explaining bookmarklet setup. Test across major browsers. Alternative: browser bookmark with custom icon. Provide bookmarklet installation in settings or help.",
+    "status": "Not Started",
+    "notes": "Phase: 3 (Advanced Features)\nPriority: LOW\nCategory: Integration\nComplexity: Simple\nDependencies: None",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 57,
+    "title": "Implement loading states and skeleton screens",
+    "description": "Create skeleton screens for all loading scenarios: initial dashboard load, repo card loading, data refresh. Show skeleton placeholders matching layout of loaded content. Smooth transition from skeleton to real content. Loading spinner for long operations. Progress indicators for multi-step operations (e.g., fetching many repos). Avoid layout shift during loading. Communicate what's loading (text label). Timeout handling for stuck loading states. Loading states for: initial PAT validation, repo fetching, organization loading, individual repo data.",
+    "status": "Not Started",
+    "notes": "Phase: 4 (Polish & Optimization)\nPriority: MEDIUM\nCategory: Quality\nComplexity: Moderate\nDependencies: All data fetching features",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  },
+  {
+    "id": 58,
+    "title": "Implement comprehensive error handling and retry logic",
+    "description": "Handle all API error scenarios: network errors, rate limit exceeded, 401 unauthorized, 403 forbidden, 404 not found, 500 server errors. Display user-friendly error messages with recovery actions. Auto-retry transient errors (network failures) with exponential backoff. Manual retry button for failed operations. Show error state in UI (error banner, inline messages). Log errors for debugging (console). Handle partial failures (some repos fail to load). Graceful degradation when optional features fail. Clear error state on retry/refresh. Specific handling for PAT expiration/revocation.",
+    "status": "Not Started",
+    "notes": "Phase: 4 (Polish & Optimization)\nPriority: MEDIUM\nCategory: Quality\nComplexity: Moderate\nDependencies: All API features",
+    "created": "2025-12-10T21:50:00.000Z",
+    "updated": "2025-12-10T21:50:00.000Z"
+  }
+]
