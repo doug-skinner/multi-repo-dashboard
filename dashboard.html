@@ -151,6 +151,183 @@
             color: #586069;
             font-style: italic;
         }
+
+        .repos-section {
+            margin-top: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: #24292e;
+        }
+
+        .add-repos-button {
+            padding: 0.5rem 1rem;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .add-repos-button:hover {
+            background: var(--color-primary-hover);
+            text-decoration: none;
+        }
+
+        .repos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .repo-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            transition: box-shadow 0.15s ease;
+        }
+
+        .repo-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .repo-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .repo-card-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+        }
+
+        .repo-card-title {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .repo-card-name {
+            font-weight: 600;
+            color: #0366d6;
+            text-decoration: none;
+            display: block;
+            word-break: break-word;
+        }
+
+        .repo-card-name:hover {
+            text-decoration: underline;
+        }
+
+        .repo-card-owner {
+            font-size: 12px;
+            color: #586069;
+        }
+
+        .repo-card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .card-action-button {
+            padding: 0.25rem 0.5rem;
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .card-action-button:hover {
+            background: #e1e4e8;
+        }
+
+        .repo-card-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 13px;
+            color: #586069;
+        }
+
+        .repo-card-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .repo-card-activity {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: #f6f8fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .repo-card-activity-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #24292e;
+        }
+
+        .repo-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 12px;
+            color: #586069;
+        }
+
+        .repo-language {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .language-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #586069;
+        }
+
+        .repo-updated {
+            font-size: 12px;
+            color: #586069;
+        }
+
+        .empty-repos {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .empty-repos h3 {
+            margin-bottom: 1rem;
+            color: #24292e;
+        }
+
+        .empty-repos p {
+            color: #586069;
+            margin-bottom: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -173,10 +350,14 @@
             </div>
         </div>
 
-        <div id="main-content" class="coming-soon">
-            <h1>Dashboard Coming Soon</h1>
-            <p>The full dashboard interface will be implemented in the next phase.</p>
-            <p><a href="selection.html">Select repositories to track</a></p>
+        <div class="repos-section">
+            <div class="section-header">
+                <h2>Tracked Repositories</h2>
+                <a href="selection.html" class="add-repos-button">+ Add Repositories</a>
+            </div>
+            <div id="repos-container">
+                <p>Loading...</p>
+            </div>
         </div>
     </div>
 
@@ -210,6 +391,115 @@
         }
 
         /**
+         * Display tracked repositories
+         */
+        async function displayTrackedRepos() {
+            const container = document.getElementById('repos-container');
+            const trackedRepos = getTrackedRepos();
+
+            if (trackedRepos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-repos">
+                        <h3>No repositories tracked yet</h3>
+                        <p>Start by selecting repositories you want to track</p>
+                        <a href="selection.html" class="add-repos-button">Select Repositories</a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Fetch full repo details
+            const allRepos = await initRepositories();
+            const reposMap = new Map(allRepos.map(r => [r.id, r]));
+
+            const grid = document.createElement('div');
+            grid.className = 'repos-grid';
+
+            trackedRepos.forEach(trackedRepo => {
+                const repoDetails = reposMap.get(trackedRepo.id);
+                if (repoDetails) {
+                    const card = createRepoCard(trackedRepo, repoDetails);
+                    grid.appendChild(card);
+                }
+            });
+
+            container.innerHTML = '';
+            container.appendChild(grid);
+        }
+
+        /**
+         * Create repository card
+         */
+        function createRepoCard(trackedRepo, repoDetails) {
+            const card = document.createElement('div');
+            card.className = 'repo-card';
+
+            const lastUpdated = new Date(repoDetails.updated_at);
+            const relativeTime = getRelativeTime(lastUpdated);
+
+            card.innerHTML = `
+                <div class="repo-card-header">
+                    <img class="repo-card-avatar" src="${repoDetails.owner.avatar_url}" alt="${repoDetails.owner.login}">
+                    <div class="repo-card-title">
+                        <a href="${repoDetails.html_url}" target="_blank" rel="noopener" class="repo-card-name">${repoDetails.name}</a>
+                        <div class="repo-card-owner">${repoDetails.full_name}</div>
+                    </div>
+                    <div class="repo-card-actions">
+                        <button class="card-action-button" title="Pin">📌</button>
+                        <button class="card-action-button" title="Remove">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="repo-card-stats">
+                    <span class="repo-card-stat">⭐ ${repoDetails.stargazers_count}</span>
+                    <span class="repo-card-stat">🍴 ${repoDetails.forks_count}</span>
+                    <span class="repo-card-stat">👁️ ${repoDetails.watchers_count}</span>
+                </div>
+
+                <div class="repo-card-activity">
+                    <div class="repo-card-activity-title">Recent Activity</div>
+                    <div>Last updated ${relativeTime}</div>
+                </div>
+
+                <div class="repo-card-footer">
+                    ${repoDetails.language ? `
+                        <span class="repo-language">
+                            <span class="language-dot"></span>
+                            ${repoDetails.language}
+                        </span>
+                    ` : '<span></span>'}
+                    <a href="${repoDetails.html_url}" target="_blank" rel="noopener">View on GitHub →</a>
+                </div>
+            `;
+
+            return card;
+        }
+
+        /**
+         * Get relative time string
+         */
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSecs = Math.floor(diffMs / 1000);
+            const diffMins = Math.floor(diffSecs / 60);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffDays > 30) {
+                return date.toLocaleDateString();
+            } else if (diffDays > 0) {
+                return `${diffDays}d ago`;
+            } else if (diffHours > 0) {
+                return `${diffHours}h ago`;
+            } else if (diffMins > 0) {
+                return `${diffMins}m ago`;
+            } else {
+                return 'just now';
+            }
+        }
+
+        /**
          * Initialize dashboard
          */
         async function initDashboard() {
@@ -229,6 +519,9 @@
                 const organizations = await initOrganizations();
                 displayOrganizations(organizations);
 
+                // Load and display tracked repositories
+                await displayTrackedRepos();
+
             } catch (error) {
                 console.error('Failed to initialize dashboard:', error);
                 if (error.message === 'RATE_LIMIT_EXCEEDED') {
@@ -237,10 +530,10 @@
                     alert('Failed to load dashboard data. Please try refreshing the page.');
                 }
 
-                // Show error in organizations container
-                const container = document.getElementById('organizations-container');
-                if (container) {
-                    container.innerHTML = '<p style="color: #d73a49;">Failed to load organizations. Please refresh the page.</p>';
+                // Show error
+                const reposContainer = document.getElementById('repos-container');
+                if (reposContainer) {
+                    reposContainer.innerHTML = '<p style="color: #d73a49;">Failed to load repositories. Please refresh the page.</p>';
                 }
             }
 
