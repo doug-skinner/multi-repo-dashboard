@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Multi-Repo Dashboard</title>
+    <link rel="stylesheet" href="styles/common.css">
+    <style>
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .logout-button {
+            padding: 0.5rem 1rem;
+            background: #d73a49;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .logout-button:hover {
+            background: #cb2431;
+        }
+
+        .coming-soon {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .coming-soon h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #24292e;
+        }
+
+        .coming-soon p {
+            color: #586069;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="user-info">
+                <img id="user-avatar" class="user-avatar" src="" alt="User avatar">
+                <div>
+                    <strong id="user-name">Loading...</strong>
+                </div>
+            </div>
+            <button id="logout-button" class="logout-button">Logout</button>
+        </div>
+
+        <div class="coming-soon">
+            <h1>Dashboard Coming Soon</h1>
+            <p>The full dashboard interface will be implemented in the next phase.</p>
+            <p>For now, you're successfully authenticated!</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is authenticated
+        const pat = localStorage.getItem('github_pat') || sessionStorage.getItem('github_pat');
+        if (!pat) {
+            window.location.href = 'auth.html';
+        }
+
+        // Load and display user info
+        const userInfoStr = localStorage.getItem('user_info') || sessionStorage.getItem('user_info');
+        if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr);
+            document.getElementById('user-avatar').src = userInfo.avatar_url;
+            document.getElementById('user-name').textContent = userInfo.name;
+        }
+
+        // Logout functionality
+        document.getElementById('logout-button').addEventListener('click', function() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('github_pat');
+                sessionStorage.removeItem('github_pat');
+                localStorage.removeItem('user_info');
+                sessionStorage.removeItem('user_info');
+                window.location.href = 'auth.html';
+            }
+        });
+    </script>
+</body>
+</html>

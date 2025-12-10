@@ -162,5 +162,17 @@
             </p>
         </footer>
     </div>
+
+    <script>
+        // Redirect to auth page if not authenticated, otherwise to dashboard
+        (function() {
+            const pat = localStorage.getItem('github_pat') || sessionStorage.getItem('github_pat');
+            if (pat) {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'auth.html';
+            }
+        })();
+    </script>
 </body>
 </html>
