@@ -108,6 +108,8 @@ function clearAuth() {
     sessionStorage.removeItem('user_info');
     localStorage.removeItem('organizations');
     sessionStorage.removeItem('organizations');
+    localStorage.removeItem('organizations_timestamp');
+    sessionStorage.removeItem('organizations_timestamp');
 }
 
 /**
@@ -176,4 +178,108 @@ function displayUserInfo(userInfo) {
     if (loginEl) {
         loginEl.textContent = `@${userInfo.login}`;
     }
+}
+
+// ==================== Organization Management ====================
+
+/**
+ * Get stored organizations from browser storage
+ * @returns {Array|null} Organizations array if found, null otherwise
+ */
+function getStoredOrganizations() {
+    const orgsStr = localStorage.getItem('organizations') || sessionStorage.getItem('organizations');
+    return orgsStr ? JSON.parse(orgsStr) : null;
+}
+
+/**
+ * Store organizations in browser storage
+ * @param {Array} organizations - Organizations array
+ */
+function storeOrganizations(organizations) {
+    const storage = localStorage.getItem('github_pat') ? localStorage : sessionStorage;
+    storage.setItem('organizations', JSON.stringify(organizations));
+
+    // Store timestamp for cache management
+    storage.setItem('organizations_timestamp', Date.now().toString());
+}
+
+/**
+ * Check if organizations cache is still valid (30-minute TTL)
+ * @returns {boolean} True if cache is valid, false otherwise
+ */
+function isOrganizationsCacheValid() {
+    const storage = localStorage.getItem('github_pat') ? localStorage : sessionStorage;
+    const timestamp = storage.getItem('organizations_timestamp');
+
+    if (!timestamp) {
+        return false;
+    }
+
+    const age = Date.now() - parseInt(timestamp);
+    const TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+    return age < TTL;
+}
+
+/**
+ * Fetch user organizations from GitHub API
+ * @returns {Promise<Array>} Array of organization objects
+ */
+async function fetchOrganizations() {
+    const orgs = await githubAPI('/user/orgs');
+
+    return orgs.map(org => ({
+        id: org.id,
+        login: org.login,
+        avatar_url: org.avatar_url,
+        description: org.description || '',
+        url: org.url
+    }));
+}
+
+/**
+ * Initialize organizations - load from storage or fetch from API
+ * @param {boolean} forceRefresh - Force refresh from API even if cached
+ * @returns {Promise<Array>} Organizations array
+ */
+async function initOrganizations(forceRefresh = false) {
+    if (!requireAuth()) {
+        return [];
+    }
+
+    // Try to load from cache first
+    if (!forceRefresh && isOrganizationsCacheValid()) {
+        const storedOrgs = getStoredOrganizations();
+        if (storedOrgs) {
+            return storedOrgs;
+        }
+    }
+
+    // Fetch from API and store
+    try {
+        const organizations = await fetchOrganizations();
+        storeOrganizations(organizations);
+        return organizations;
+    } catch (error) {
+        console.error('Failed to fetch organizations:', error);
+
+        // Return cached data if available, even if stale
+        const storedOrgs = getStoredOrganizations();
+        if (storedOrgs) {
+            console.warn('Using stale organizations cache due to API error');
+            return storedOrgs;
+        }
+
+        throw error;
+    }
+}
+
+/**
+ * Get organization by login name
+ * @param {string} login - Organization login name
+ * @returns {Promise<Object|null>} Organization object or null if not found
+ */
+async function getOrganizationByLogin(login) {
+    const organizations = await initOrganizations();
+    return organizations.find(org => org.login === login) || null;
 }
