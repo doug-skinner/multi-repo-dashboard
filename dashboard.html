@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Multi-Repo Dashboard</title>
     <link rel="stylesheet" href="styles/common.css">
+    <script src="scripts/api.js"></script>
     <style>
         .dashboard-container {
             max-width: 1400px;
@@ -33,6 +34,22 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
+            border: 2px solid #e1e4e8;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #24292e;
+        }
+
+        .user-login {
+            font-size: 12px;
+            color: #586069;
         }
 
         .logout-button {
@@ -73,8 +90,9 @@
         <div class="dashboard-header">
             <div class="user-info">
                 <img id="user-avatar" class="user-avatar" src="" alt="User avatar">
-                <div>
-                    <strong id="user-name">Loading...</strong>
+                <div class="user-details">
+                    <span id="user-name" class="user-name">Loading...</span>
+                    <span id="user-login" class="user-login"></span>
                 </div>
             </div>
             <button id="logout-button" class="logout-button">Logout</button>
@@ -88,30 +106,45 @@
     </div>
 
     <script>
-        // Check if user is authenticated
-        const pat = localStorage.getItem('github_pat') || sessionStorage.getItem('github_pat');
-        if (!pat) {
-            window.location.href = 'auth.html';
-        }
-
-        // Load and display user info
-        const userInfoStr = localStorage.getItem('user_info') || sessionStorage.getItem('user_info');
-        if (userInfoStr) {
-            const userInfo = JSON.parse(userInfoStr);
-            document.getElementById('user-avatar').src = userInfo.avatar_url;
-            document.getElementById('user-name').textContent = userInfo.name;
-        }
-
-        // Logout functionality
-        document.getElementById('logout-button').addEventListener('click', function() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('github_pat');
-                sessionStorage.removeItem('github_pat');
-                localStorage.removeItem('user_info');
-                sessionStorage.removeItem('user_info');
-                window.location.href = 'auth.html';
+        /**
+         * Initialize dashboard
+         */
+        async function initDashboard() {
+            // Require authentication
+            if (!requireAuth()) {
+                return;
             }
-        });
+
+            try {
+                // Load and display user info
+                const userInfo = await initUserInfo();
+                if (userInfo) {
+                    displayUserInfo(userInfo);
+                }
+            } catch (error) {
+                console.error('Failed to initialize dashboard:', error);
+                if (error.message === 'RATE_LIMIT_EXCEEDED') {
+                    alert('GitHub API rate limit exceeded. Please wait a moment and refresh the page.');
+                } else {
+                    alert('Failed to load user information. Please try refreshing the page.');
+                }
+            }
+
+            // Setup logout functionality
+            document.getElementById('logout-button').addEventListener('click', function() {
+                if (confirm('Are you sure you want to logout?')) {
+                    clearAuth();
+                    window.location.href = 'auth.html';
+                }
+            });
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDashboard);
+        } else {
+            initDashboard();
+        }
     </script>
 </body>
 </html>
