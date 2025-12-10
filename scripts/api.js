@@ -283,3 +283,231 @@ async function getOrganizationByLogin(login) {
     const organizations = await initOrganizations();
     return organizations.find(org => org.login === login) || null;
 }
+
+// ==================== Repository Management ====================
+
+/**
+ * Fetch all repositories for a specific endpoint with pagination
+ * @param {string} endpoint - API endpoint to fetch from
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Array>} Array of repositories
+ */
+async function fetchAllRepositories(endpoint, params = {}) {
+    const repos = [];
+    let page = 1;
+    const perPage = 100;
+
+    while (true) {
+        const queryParams = new URLSearchParams({
+            ...params,
+            page: page.toString(),
+            per_page: perPage.toString()
+        });
+
+        const url = `${endpoint}?${queryParams}`;
+        const pageRepos = await githubAPI(url);
+
+        if (pageRepos.length === 0) {
+            break;
+        }
+
+        repos.push(...pageRepos);
+
+        // If we got less than perPage, we're on the last page
+        if (pageRepos.length < perPage) {
+            break;
+        }
+
+        page++;
+    }
+
+    return repos;
+}
+
+/**
+ * Fetch user's repositories
+ * @returns {Promise<Array>} Array of repository objects
+ */
+async function fetchUserRepositories() {
+    const params = {
+        type: 'all',
+        sort: 'updated',
+        affiliation: 'owner,collaborator,organization_member'
+    };
+
+    const repos = await fetchAllRepositories('/user/repos', params);
+
+    return repos.map(repo => ({
+        id: repo.id,
+        full_name: repo.full_name,
+        name: repo.name,
+        owner: {
+            login: repo.owner.login,
+            avatar_url: repo.owner.avatar_url,
+            type: repo.owner.type
+        },
+        owner_type: repo.owner.type, // 'User' or 'Organization'
+        description: repo.description || '',
+        private: repo.private,
+        html_url: repo.html_url,
+        stargazers_count: repo.stargazers_count,
+        watchers_count: repo.watchers_count,
+        forks_count: repo.forks_count,
+        open_issues_count: repo.open_issues_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+        created_at: repo.created_at,
+        archived: repo.archived
+    }));
+}
+
+/**
+ * Fetch repositories for a specific organization
+ * @param {string} orgLogin - Organization login name
+ * @returns {Promise<Array>} Array of repository objects
+ */
+async function fetchOrganizationRepositories(orgLogin) {
+    const params = {
+        type: 'all',
+        sort: 'updated'
+    };
+
+    const repos = await fetchAllRepositories(`/orgs/${orgLogin}/repos`, params);
+
+    return repos.map(repo => ({
+        id: repo.id,
+        full_name: repo.full_name,
+        name: repo.name,
+        owner: {
+            login: repo.owner.login,
+            avatar_url: repo.owner.avatar_url,
+            type: repo.owner.type
+        },
+        owner_type: repo.owner.type,
+        description: repo.description || '',
+        private: repo.private,
+        html_url: repo.html_url,
+        stargazers_count: repo.stargazers_count,
+        watchers_count: repo.watchers_count,
+        forks_count: repo.forks_count,
+        open_issues_count: repo.open_issues_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+        created_at: repo.created_at,
+        archived: repo.archived
+    }));
+}
+
+/**
+ * Check if repositories cache is still valid (5-minute TTL)
+ * @returns {boolean} True if cache is valid, false otherwise
+ */
+function isRepositoriesCacheValid() {
+    const cacheKey = 'repositories_all';
+    const cachedData = getCachedValue(cacheKey);
+    return cachedData !== null;
+}
+
+/**
+ * Get stored repositories from cache
+ * @returns {Array|null} Repositories array if found, null otherwise
+ */
+function getStoredRepositories() {
+    const cacheKey = 'repositories_all';
+    return getCachedValue(cacheKey);
+}
+
+/**
+ * Store repositories in cache
+ * @param {Array} repositories - Repositories array
+ */
+function storeRepositories(repositories) {
+    const cacheKey = 'repositories_all';
+    setCachedValue(cacheKey, repositories, 5); // 5-minute TTL
+}
+
+/**
+ * Fetch all repositories from user and all organizations
+ * @returns {Promise<Array>} Array of all repository objects
+ */
+async function fetchAllUserRepositories() {
+    // Fetch user repositories
+    const userRepos = await fetchUserRepositories();
+
+    // Fetch organization repositories
+    const organizations = await initOrganizations();
+    const orgReposPromises = organizations.map(org =>
+        fetchOrganizationRepositories(org.login).catch(error => {
+            console.error(`Failed to fetch repos for org ${org.login}:`, error);
+            return []; // Return empty array on error, don't fail entire fetch
+        })
+    );
+
+    const orgReposArrays = await Promise.all(orgReposPromises);
+    const orgRepos = orgReposArrays.flat();
+
+    // Merge and deduplicate by repo ID
+    const allRepos = [...userRepos, ...orgRepos];
+    const uniqueRepos = Array.from(
+        new Map(allRepos.map(repo => [repo.id, repo])).values()
+    );
+
+    return uniqueRepos;
+}
+
+/**
+ * Initialize repositories - load from cache or fetch from API
+ * @param {boolean} forceRefresh - Force refresh from API even if cached
+ * @returns {Promise<Array>} Repositories array
+ */
+async function initRepositories(forceRefresh = false) {
+    if (!requireAuth()) {
+        return [];
+    }
+
+    // Try to load from cache first
+    if (!forceRefresh && isRepositoriesCacheValid()) {
+        const storedRepos = getStoredRepositories();
+        if (storedRepos) {
+            return storedRepos;
+        }
+    }
+
+    // Fetch from API and store
+    try {
+        const repositories = await fetchAllUserRepositories();
+        storeRepositories(repositories);
+        return repositories;
+    } catch (error) {
+        console.error('Failed to fetch repositories:', error);
+
+        // Return cached data if available, even if stale
+        const storedRepos = getStoredRepositories();
+        if (storedRepos) {
+            console.warn('Using stale repositories cache due to API error');
+            return storedRepos;
+        }
+
+        throw error;
+    }
+}
+
+/**
+ * Get repository by full name (owner/repo)
+ * @param {string} fullName - Repository full name (e.g., "owner/repo")
+ * @returns {Promise<Object|null>} Repository object or null if not found
+ */
+async function getRepositoryByFullName(fullName) {
+    const repositories = await initRepositories();
+    return repositories.find(repo => repo.full_name === fullName) || null;
+}
+
+/**
+ * Get repository by ID
+ * @param {number} id - Repository ID
+ * @returns {Promise<Object|null>} Repository object or null if not found
+ */
+async function getRepositoryById(id) {
+    const repositories = await initRepositories();
+    return repositories.find(repo => repo.id === id) || null;
+}
